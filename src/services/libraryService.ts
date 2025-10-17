@@ -61,3 +61,32 @@ export const returnBook = (bookId: string, userId: string): Promise<string> => {
 export const getBooks = (): Promise<Book[]> => {
   return Promise.resolve(books);
 };
+
+/**
+ * Admin: Add a new book to the library
+ */
+export const addBook = (newBook: Book): Promise<string> => {
+  return new Promise((resolve) => {
+    books.push(newBook);
+    resolve('Book added successfully');
+  });
+};
+
+/**
+ * Admin: Update stock for a specific book
+ */
+export const updateStock = (bookId: string, newCopies: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const book = books.find(b => b.id === bookId);
+    if (!book) return reject('Book not found');
+    book.copies = newCopies;
+    resolve('Stock updated');
+  });
+};
+
+/**
+ * Admin: View full inventory
+ */
+export const getInventory = (): Promise<Book[]> => {
+  return Promise.resolve(books);
+};
