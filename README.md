@@ -1,3 +1,30 @@
+# 📚 Hexad Library Management (Frontend Challenge)
+
+## 🔐 Login Credentials
+- **Admin**: jagadish / jagadishmec18
+- **User**: user123 (mock)
+
+## 🧠 Features
+- View available books
+- Borrow books (limit: 2 per user)
+- Return borrowed books
+- Admin panel to add/update inventory
+- Role-based login (user/admin)
+
+## 🧪 Tech Stack
+- React + TypeScript
+- Context API for Auth
+- CSS for styling
+- Mock backend via service layer
+
+## 🚀 How to Run
+```bash
+npm install
+npm start
+
+
+
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
