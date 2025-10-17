@@ -1,44 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useAuth } from './context/AuthContext';
+import Login from './components/Login';
+import Signup from './components/Signup';
 import BookList from './components/BookList';
 import BorrowForm from './components/BorrowForm';
 import ReturnForm from './components/ReturnForm';
-import Login from './components/Login';
-import AdminPanel from './components/AdminPanel'; // Phase 6
-import { useAuth } from './context/AuthContext';
+import AdminPanel from './components/AdminPanel';
+import './app.css';
 
 const App: React.FC = () => {
   const { role } = useAuth();
+  const [isLoginMode, setIsLoginMode] = useState(true);
+
+  const toggleAuthMode = () => {
+    setIsLoginMode(!isLoginMode);
+  };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'Arial, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>📚 Hexad Library Management</h1>
-      <Login />
+    <div className="app">
+      <header className="app-header">
+        <div className="header-content">
+          <h1>🏛️ Community Library System</h1>
+          <p className="app-subtitle">
+            Your gateway to knowledge and imagination
+          </p>
+        </div>
+      </header>
 
-      {role ? (
-        <>
-          <p>Welcome, <strong>{role}</strong>! You can view, borrow, and return books below.</p>
-
-          <section style={{ marginBottom: '2rem' }}>
-            <BookList />
-          </section>
-
-          <section style={{ marginBottom: '2rem' }}>
-            <BorrowForm />
-          </section>
-
-          <section style={{ marginBottom: '2rem' }}>
-            <ReturnForm />
-          </section>
-
-          {role === 'admin' && (
-            <section>
-              <AdminPanel />
-            </section>
-          )}
-        </>
+      {!role ? (
+        isLoginMode ? (
+          <Login onToggleMode={toggleAuthMode} />
+        ) : (
+          <Signup onToggleMode={toggleAuthMode} />
+        )
       ) : (
-        <p>Please log in to access library features.</p>
+        <main className="app-main">
+          {role === 'admin' ? (
+            <div className="admin-layout">
+              <AdminPanel />
+            </div>
+          ) : (
+            <div className="user-layout">
+              <div className="user-main-section">
+                <BookList />
+              </div>
+              
+              <div className="user-sidebar">
+                <div className="sidebar-section">
+                  <BorrowForm />
+                </div>
+                
+                <div className="sidebar-section">
+                  <ReturnForm />
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
       )}
+
+      <footer className="app-footer">
+        <p>&copy; 2024 Community Library System. All rights reserved.</p>
+        <p className="footer-links">
+          <span>📞 Contact: (555) 123-LIBRARY</span>
+          <span>📧 Email: info@communitylibrary.org</span>
+          <span>📍 Address: 123 Knowledge Street, Learning City</span>
+        </p>
+      </footer>
     </div>
   );
 };

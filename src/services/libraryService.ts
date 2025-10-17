@@ -1,92 +1,119 @@
-import { Book } from '../types/models';
+import { Book, BorrowRecord } from '../types/models';
 
-// Initial mock book data
+// Mock data
 let books: Book[] = [
-  { id: '1', title: 'Clean Code', author: 'Robert C. Martin', copies: 3 },
-  { id: '2', title: 'The Pragmatic Programmer', author: 'Andy Hunt', copies: 2 },
-  { id: '3', title: 'You Don’t Know JS', author: 'Kyle Simpson', copies: 1 },
+  {
+    id: '1',
+    title: 'The Great Gatsby',
+    author: 'F. Scott Fitzgerald',
+    copies: 3,
+    isbn: '9780743273565',
+    publishedYear: 1925,
+    category: 'Fiction'
+  },
+  {
+    id: '2',
+    title: 'To Kill a Mockingbird',
+    author: 'Harper Lee',
+    copies: 2,
+    isbn: '9780061120084',
+    publishedYear: 1960,
+    category: 'Fiction'
+  }
 ];
 
-// Tracks borrowed books per user
-let borrowedBooks: Book[] = [];
+let borrowRecords: BorrowRecord[] = [];
 
-/**
- * Borrow a book if available and within user limits
- */
-export const borrowBook = (bookId: string, userId: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const book = books.find(b => b.id === bookId);
-    const userBorrowed = borrowedBooks.filter(b => b.borrowedBy === userId);
+// Simulate API delay
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-    if (!book) return reject('Book not found');
-    if (book.copies < 1) return reject('Book not available');
-    if (userBorrowed.length >= 2) return reject('Borrow limit reached');
-    if (userBorrowed.some(b => b.id === bookId)) return reject('Already borrowed this book');
+export const getBooks = async (): Promise<Book[]> => {
+  await delay(500);
+  return books.filter(book => book.copies > 0);
+};
 
-    // Reduce stock and add to borrowed list
-    book.copies -= 1;
-    borrowedBooks.push({ ...book, copies: 1, borrowedBy: userId });
+export const getInventory = async (): Promise<Book[]> => {
+  await delay(500);
+  return books;
+};
 
-    resolve('Book borrowed successfully');
+export const addBook = async (book: Book): Promise<string> => {
+  await delay(500);
+  const existingBook = books.find(b => b.title.toLowerCase() === book.title.toLowerCase() && b.author.toLowerCase() === book.author.toLowerCase());
+  
+  if (existingBook) {
+    existingBook.copies += book.copies;
+    return `Book stock updated successfully! Total copies: ${existingBook.copies}`;
+  } else {
+    books.push(book);
+    return `Book "${book.title}" added successfully!`;
+  }
+};
+
+export const updateStock = async (bookId: string, newCopies: number): Promise<string> => {
+  await delay(500);
+  const book = books.find(b => b.id === bookId);
+  if (!book) throw new Error('Book not found');
+  
+  if (newCopies < 0) throw new Error('Copies cannot be negative');
+  
+  book.copies = newCopies;
+  return `Stock updated successfully! Copies: ${newCopies}`;
+};
+
+export const borrowBook = async (bookId: string, userId: string): Promise<string> => {
+  await delay(500);
+  const book = books.find(b => b.id === bookId);
+  if (!book) throw new Error('Book not found');
+  if (book.copies <= 0) throw new Error('No copies available');
+  
+  const existingBorrow = borrowRecords.find(record => 
+    record.bookId === bookId && record.userId === userId && !record.returnDate
+  );
+  if (existingBorrow) throw new Error('You have already borrowed this book');
+  
+  book.copies--;
+  
+  const borrowRecord: BorrowRecord = {
+    id: `borrow-${Date.now()}`,
+    bookId,
+    userId,
+    borrowDate: new Date().toISOString().split('T')[0],
+    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  };
+  
+  borrowRecords.push(borrowRecord);
+  return `Book "${book.title}" borrowed successfully! Due date: ${borrowRecord.dueDate}`;
+};
+
+export const returnBook = async (bookId: string, userId: string): Promise<string> => {
+  await delay(500);
+  const book = books.find(b => b.id === bookId);
+  if (!book) throw new Error('Book not found');
+  
+  const borrowRecord = borrowRecords.find(record => 
+    record.bookId === bookId && record.userId === userId && !record.returnDate
+  );
+  if (!borrowRecord) throw new Error('No active borrow record found');
+  
+  borrowRecord.returnDate = new Date().toISOString().split('T')[0];
+  book.copies++;
+  
+  return `Book "${book.title}" returned successfully!`;
+};
+
+export const getBorrowedBooks = async (userId: string): Promise<(Book & { dueDate: string })[]> => {
+  await delay(500);
+  const userBorrows = borrowRecords.filter(record => 
+    record.userId === userId && !record.returnDate
+  );
+  
+  return userBorrows.map(record => {
+    const book = books.find(b => b.id === record.bookId);
+    if (!book) throw new Error('Book not found');
+    return { 
+      ...book, 
+      dueDate: record.dueDate 
+    };
   });
-};
-
-/**
- * Get books borrowed by a specific user
- */
-export const getBorrowedBooks = (userId: string): Promise<Book[]> => {
-  return Promise.resolve(borrowedBooks.filter(b => b.borrowedBy === userId));
-};
-
-/**
- * Return a book and update stock
- */
-export const returnBook = (bookId: string, userId: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const index = borrowedBooks.findIndex(b => b.id === bookId && b.borrowedBy === userId);
-    if (index === -1) return reject('Book not found in borrowed list');
-
-    // Remove from borrowed list and update stock
-    borrowedBooks.splice(index, 1);
-    const bookInLibrary = books.find(b => b.id === bookId);
-    if (bookInLibrary) bookInLibrary.copies += 1;
-
-    resolve('Book returned successfully');
-  });
-};
-
-/**
- * Get all available books in the library
- */
-export const getBooks = (): Promise<Book[]> => {
-  return Promise.resolve(books);
-};
-
-/**
- * Admin: Add a new book to the library
- */
-export const addBook = (newBook: Book): Promise<string> => {
-  return new Promise((resolve) => {
-    books.push(newBook);
-    resolve('Book added successfully');
-  });
-};
-
-/**
- * Admin: Update stock for a specific book
- */
-export const updateStock = (bookId: string, newCopies: number): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const book = books.find(b => b.id === bookId);
-    if (!book) return reject('Book not found');
-    book.copies = newCopies;
-    resolve('Stock updated');
-  });
-};
-
-/**
- * Admin: View full inventory
- */
-export const getInventory = (): Promise<Book[]> => {
-  return Promise.resolve(books);
 };
