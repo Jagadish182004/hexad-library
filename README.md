@@ -1,5 +1,8 @@
 # 📚 Hexad Library Management (Frontend Challenge)
 
+##view the site 
+click this link :  https://hexad-library.vercel.app/
+
 ## 🔐 Login Credentials
 - **Admin**: jagadish / jagadishmec18
 - **User**: user123 (mock)
